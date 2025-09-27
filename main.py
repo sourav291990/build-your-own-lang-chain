@@ -1,6 +1,5 @@
 from typing import List, Union
 from dotenv import load_dotenv
-from langchain.agents import tool
 from langchain_core.prompts import PromptTemplate
 from langchain.tools.render import render_text_description
 from langchain_openai import ChatOpenAI
@@ -9,16 +8,10 @@ from langchain.schema import AgentAction, AgentFinish
 from langchain.tools import Tool
 from langchain.agents.format_scratchpad import format_log_to_str
 from callbacks import AgentCallbackHandler
+from promts.prompt import REACT_PROMPT_TEMPLATE
+from tools.tools import get_text_length
 
 load_dotenv()
-
-
-@tool
-def get_text_length(text: str) -> int:
-    """Returns the length of the given text."""
-    print(f"Calculating length of text: {text}")
-    return len(text)
-
 
 def find_tool_by_name(tools: List[Tool], name: str):
     for tool in tools:
@@ -28,32 +21,8 @@ def find_tool_by_name(tools: List[Tool], name: str):
 
 
 def main():
-    print("Hello from react-langchain!")
-    print(f"Length of 'Hello, World!': {get_text_length.invoke('Hello, World!')}")
-
     tools = [get_text_length]
-    template = """
-
-    Answer the following questions as best you can. You have access to the following tools:
-
-    {tools}
-
-    Use the following format:
-
-    Question: the input question you must answer
-    Thought: you should always think about what to do
-    Action: the action to take, should be one of [{tool_names}]
-    Action Input: the input to the action
-    Observation: the result of the action
-    ... (this Thought/Action/Action Input/Observation can repeat N times)
-    Thought: I now know the final answer
-    Final Answer: the final answer to the original input question
-
-    Begin!
-
-    Question: {input}
-    Thought: {agent_scratchpad}
-    """
+    template = REACT_PROMPT_TEMPLATE
 
     prompt = PromptTemplate.from_template(template=template).partial(
         tools=render_text_description(tools=tools),
